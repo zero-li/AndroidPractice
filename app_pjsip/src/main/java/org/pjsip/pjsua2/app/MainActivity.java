@@ -106,10 +106,17 @@ public class MainActivity extends Activity
 
         if (app.accList.size() == 0) {
             accCfg = new AccountConfig();
-            accCfg.setIdUri("sip:localhost");
-            accCfg.getNatConfig().setIceEnabled(true);
+            accCfg.setIdUri("sip:159@shbox");
+            accCfg.getNatConfig().setIceEnabled(false);
             accCfg.getVideoConfig().setAutoTransmitOutgoing(true);
             accCfg.getVideoConfig().setAutoShowIncoming(true);
+
+            // zhhli
+            accCfg.getRegConfig().setRegistrarUri("sip:139.224.68.122:6060");
+            AuthCredInfoVector creds = accCfg.getSipConfig().getAuthCreds();
+            creds.clear();
+            creds.add(new AuthCredInfo("Digest", "*", "159", 0,
+                    "123456"));
             account = app.addAcc(accCfg);
         } else {
             account = app.accList.get(0);
@@ -130,7 +137,7 @@ public class MainActivity extends Activity
                 from, to);
 
         buddyListView = (ListView) findViewById(R.id.listViewBuddy);
-        ;
+        buddyList.add(getBuddyMap());
         buddyListView.setAdapter(buddyListAdapter);
         buddyListView.setOnItemClickListener(
                 new AdapterView.OnItemClickListener() {
@@ -338,7 +345,7 @@ public class MainActivity extends Activity
                         }
 
 		    /* Enable ICE */
-                        accCfg.getNatConfig().setIceEnabled(true);
+                        accCfg.getNatConfig().setIceEnabled(false);
 
 		    /* Finally */
                         lastRegStatus = "";
@@ -605,5 +612,12 @@ public class MainActivity extends Activity
     }
 
     /* === end of MyAppObserver ==== */
+
+    private Map<String, String> getBuddyMap() {
+        Map<String, String> buddyMap = new HashMap<>();
+        buddyMap = putData("sip:60005@139.224.68.122:6060;box_uid=1", "test");
+
+        return buddyMap;
+    }
 
 }

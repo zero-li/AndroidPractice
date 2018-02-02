@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package org.pjsip.pjsua2.app;
+package com.zhhli.sip;
 
 import android.util.Log;
 
@@ -408,20 +408,20 @@ class MyApp {
             System.out.println(e);
         }
 
-        try {
-            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TCP,
-                    sipTpConfig);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-
-        try {
-            sipTpConfig.setPort(SIP_PORT + 1);
-            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TLS,
-                    sipTpConfig);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+//        try {
+//            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TCP,
+//                    sipTpConfig);
+//        } catch (Exception e) {
+//            System.out.println(e);
+//        }
+//
+//        try {
+//            sipTpConfig.setPort(SIP_PORT + 1);
+//            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TLS,
+//                    sipTpConfig);
+//        } catch (Exception e) {
+//            System.out.println(e);
+//        }
 
         /* Set SIP port back to default for JSON saved config */
         sipTpConfig.setPort(SIP_PORT);
