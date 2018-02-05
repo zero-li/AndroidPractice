@@ -80,13 +80,16 @@ public class PjsipSdk {
         /* Enable ICE */
         accCfg.getNatConfig().setIceEnabled(false);
 
-        account = app.addAcc(accCfg);
 
-
+        MyAccount acc = new MyAccount(accCfg);
         try {
-            account.modify(accCfg);
+            acc.create(accCfg);
         } catch (Exception e) {
+            acc = null;
         }
+
+
+
     }
 
 
