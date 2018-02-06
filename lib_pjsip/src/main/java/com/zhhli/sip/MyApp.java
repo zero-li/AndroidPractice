@@ -68,18 +68,18 @@ import java.util.ArrayList;
 
 /* Interface to separate UI & engine a bit better */
 interface MyAppObserver {
-    abstract void notifyRegState(pjsip_status_code code, String reason,
-                                 int expiration);
+    void notifyRegState(pjsip_status_code code, String reason,
+                        int expiration);
 
-    abstract void notifyIncomingCall(MyCall call);
+    void notifyIncomingCall(MyCall call);
 
-    abstract void notifyCallState(MyCall call);
+    void notifyCallState(MyCall call);
 
-    abstract void notifyCallMediaState(MyCall call);
+    void notifyCallMediaState(MyCall call);
 
-    abstract void notifyBuddyState(MyBuddy buddy);
+    void notifyBuddyState(MyBuddy buddy);
 
-    abstract void notifyChangeNetwork();
+    void notifyChangeNetwork();
 }
 
 
