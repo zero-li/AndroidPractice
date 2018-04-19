@@ -32,7 +32,7 @@ interface SipListener {
     void notifyIncomingCall(MyCall call);
 
     /**
-     * 
+     *
      * @param callUrl
      * @param statusCode
      * @param codeStatus
@@ -74,11 +74,18 @@ public class PjsipSdk implements MyAppObserver {
         app.init(this, context.getFilesDir().getAbsolutePath());
     }
 
+    /**
+     * 帐号设置
+     * @param username 用户名
+     * @param pwd       密码
+     * @param server    服务器地址 IP:port
+     * @param proxy     sbc 代理地址, 填空表示 不使用 sbc
+     */
     public void setAccCfg(String username, String pwd, String server, String proxy) {
         accCfg = new AccountConfig();
         String acc_id = "sip:" + username + "@" + server;
         String registrar = "sip:" + server;
-        proxy = "sip:" + proxy;
+
 
         accCfg.setIdUri(acc_id);
         accCfg.getRegConfig().setRegistrarUri(registrar);
@@ -89,11 +96,12 @@ public class PjsipSdk implements MyAppObserver {
 
 
         if (proxy != null && proxy.length() != 0) {
+            proxy = "sip:" + proxy;
             StringVector proxies = accCfg.getSipConfig().getProxies();
             proxies.clear();
             proxies.add(proxy);
         }
-        /* Enable ICE */
+        /* Enable ICE 默认关闭 */
         accCfg.getNatConfig().setIceEnabled(false);
 
 
@@ -105,6 +113,11 @@ public class PjsipSdk implements MyAppObserver {
         }
     }
 
+
+    /**
+     * 呼出
+     * @param calledNumber
+     */
     public void callOut(String calledNumber) {
         String called_uri = String.format("sip:%s@%s", calledNumber, server);
 
@@ -148,8 +161,8 @@ public class PjsipSdk implements MyAppObserver {
     @Override
     public void notifyRegState(pjsip_status_code code, String reason, int expiration) {
         String msg_str = "";
-        boolean isReg = true;
-        boolean isRegOk = true;
+        boolean isReg;
+        boolean isRegOk;
         if (expiration == 0) {
             msg_str += "Unregistration";
             isReg = false;
@@ -259,7 +272,7 @@ public class PjsipSdk implements MyAppObserver {
         }
 
 
-        sipListener.notifyCallState(ci.getRemoteUri(), 0, call_state);
+        sipListener.notifyCallState(ci.getRemoteUri(), ci.getState().swigValue(), call_state);
     }
 
     @Override
