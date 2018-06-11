@@ -25,10 +25,8 @@
  -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="org.sipdroid.sipua"
-    android:versionName="3.7 beta"
-    android:versionCode="100"
+
     android:installLocation="auto">
-	<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="19"/>
 	<supports-screens
           android:normalScreens="true"
           android:smallScreens="true"

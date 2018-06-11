@@ -20,16 +20,12 @@
 
 package org.sipdroid.sipua.ui;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.List;
-
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.KeyguardManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
@@ -40,14 +36,15 @@ import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
-import android.net.Uri;
 import android.net.NetworkInfo.DetailedState;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
@@ -62,18 +59,28 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import org.sipdroid.media.Bluetooth;
 import org.sipdroid.media.RtpStreamReceiver;
 import org.sipdroid.media.RtpStreamSender;
-import org.sipdroid.sipua.*;
+import org.sipdroid.sipua.R;
+import org.sipdroid.sipua.SipdroidEngine;
+import org.sipdroid.sipua.UserAgent;
 import org.sipdroid.sipua.phone.Call;
 import org.sipdroid.sipua.phone.Connection;
 import org.zoolu.sip.provider.SipProvider;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.List;
 
 public class Receiver extends BroadcastReceiver {
 
@@ -268,6 +275,7 @@ public class Receiver extends BroadcastReceiver {
                     if (InCallScreen.started && (pstn_state == null || !pstn_state.equals("RINGING")))
                         mContext.startActivity(createIntent(InCallScreen.class));
                     break;
+                default:
             }
             pos(true);
             RtpStreamReceiver.ringback(false);
@@ -287,67 +295,78 @@ public class Receiver extends BroadcastReceiver {
             text = null;
         NotificationManager mNotificationMgr = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         if (text != null) {
-            Notification notification = new Notification();
-            notification.icon = mInCallResId;
+            Notification notification;
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, "org.sipdroid.sipua");
+            builder.setSmallIcon(mInCallResId);
+
             if (type == MISSED_CALL_NOTIFICATION) {
-                notification.flags |= Notification.FLAG_AUTO_CANCEL;
-                notification.setLatestEventInfo(mContext, text, mContext.getString(R.string.app_name),
-                        PendingIntent.getActivity(mContext, 0, createCallLogIntent(), 0));
+                builder.setAutoCancel(true)
+                        .setContentTitle(mContext.getString(R.string.app_name))
+                        .setContentText(text)
+                        .setContentIntent(PendingIntent.getActivity(mContext, 0, createCallLogIntent(), 0));
+
                 if (PreferenceManager.getDefaultSharedPreferences(Receiver.mContext).getBoolean(org.sipdroid.sipua.ui.Settings.PREF_NOTIFY, org.sipdroid.sipua.ui.Settings.DEFAULT_NOTIFY)) {
-                    notification.flags |= Notification.FLAG_SHOW_LIGHTS;
-                    notification.ledARGB = 0xff0000ff; /* blue */
-                    notification.ledOnMS = 125;
-                    notification.ledOffMS = 2875;
+                    builder.setLights(Color.BLUE, 125, 2875);
                 }
+                notification = builder.build();
             } else {
                 switch (type) {
                     case MWI_NOTIFICATION:
-                        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-                        notification.contentIntent = PendingIntent.getActivity(mContext, 0,
-                                createMWIIntent(), 0);
-                        notification.flags |= Notification.FLAG_SHOW_LIGHTS;
-                        notification.ledARGB = 0xff00ff00; /* green */
-                        notification.ledOnMS = 125;
-                        notification.ledOffMS = 2875;
+                        builder.setAutoCancel(true)
+                                .setContentTitle(mContext.getString(R.string.app_name))
+                                .setContentText(text)
+                                .setContentIntent(PendingIntent.getActivity(mContext, 0, createMWIIntent(), 0));
+
+                        if (PreferenceManager.getDefaultSharedPreferences(Receiver.mContext).getBoolean(org.sipdroid.sipua.ui.Settings.PREF_NOTIFY, org.sipdroid.sipua.ui.Settings.DEFAULT_NOTIFY)) {
+                            builder.setLights(Color.GREEN, 125, 2875);
+                        }
+
+
                         break;
                     case AUTO_ANSWER_NOTIFICATION:
-                        notification.contentIntent = PendingIntent.getActivity(mContext, 0,
-                                createIntent(AutoAnswer.class), 0);
+                        builder.setContentIntent(PendingIntent.getActivity(mContext, 0,
+                                createIntent(AutoAnswer.class), 0));
                         break;
                     default:
                         if (type >= REGISTER_NOTIFICATION && mSipdroidEngine != null && type != REGISTER_NOTIFICATION + mSipdroidEngine.pref &&
-                                mInCallResId == R.drawable.sym_presence_available)
-                            notification.contentIntent = PendingIntent.getActivity(mContext, 0,
-                                    createIntent(ChangeAccount.class), 0);
-                        else
-                            notification.contentIntent = PendingIntent.getActivity(mContext, 0,
-                                    createIntent(Sipdroid.class), 0);
+                                mInCallResId == R.drawable.sym_presence_available) {
+                            builder.setContentIntent(PendingIntent.getActivity(mContext, 0,
+                                    createIntent(ChangeAccount.class), 0));
+                        } else {
+                            builder.setContentIntent(PendingIntent.getActivity(mContext, 0,
+                                    createIntent(Sipdroid.class), 0));
+                        }
+
                         if (mInCallResId == R.drawable.sym_presence_away) {
-                            notification.flags |= Notification.FLAG_SHOW_LIGHTS;
-                            notification.ledARGB = 0xffff0000; /* red */
-                            notification.ledOnMS = 125;
-                            notification.ledOffMS = 2875;
+                            builder.setLights(Color.RED, 125, 2875);
                         }
                         break;
                 }
-                notification.flags |= Notification.FLAG_ONGOING_EVENT;
                 RemoteViews contentView = new RemoteViews(mContext.getPackageName(),
                         R.layout.ongoing_call_notification);
-                contentView.setImageViewResource(R.id.icon, notification.icon);
+                contentView.setImageViewResource(R.id.icon, mInCallResId);
                 if (base != 0) {
                     contentView.setChronometer(R.id.text1, base, text + " (%s)", true);
                 } else if (type >= REGISTER_NOTIFICATION) {
-                    if (PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean(org.sipdroid.sipua.ui.Settings.PREF_POS, org.sipdroid.sipua.ui.Settings.DEFAULT_POS))
+                    if (PreferenceManager.getDefaultSharedPreferences(mContext)
+                            .getBoolean(org.sipdroid.sipua.ui.Settings.PREF_POS, org.sipdroid.sipua.ui.Settings.DEFAULT_POS)) {
                         contentView.setTextViewText(R.id.text2, text + "/" + mContext.getString(R.string.settings_pos3));
-                    else
+                    } else {
                         contentView.setTextViewText(R.id.text2, text);
-                    if (mSipdroidEngine != null)
+                    }
+                    if (mSipdroidEngine != null) {
                         contentView.setTextViewText(R.id.text1,
                                 mSipdroidEngine.user_profiles[type - REGISTER_NOTIFICATION].username + "@" +
                                         mSipdroidEngine.user_profiles[type - REGISTER_NOTIFICATION].realm_orig);
-                } else
+                    }
+
+                } else {
                     contentView.setTextViewText(R.id.text1, text);
-                notification.contentView = contentView;
+                }
+
+                builder.setContent(contentView);
+                notification = builder.build();
+                notification.flags |= Notification.FLAG_ONGOING_EVENT;
             }
             mNotificationMgr.notify(type, notification);
         } else {
@@ -452,6 +471,17 @@ public class Receiver extends BroadcastReceiver {
                     0, intent, 0);
         }
         if (enable) {
+            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_UPDATES, 3000, gps_sender);
             am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10 * 1000, gps_sender);
         } else {
@@ -468,6 +498,17 @@ public class Receiver extends BroadcastReceiver {
         }
         if (net_enabled != enable) {
             if (enable) {
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
                 lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NET_UPDATES, 3000, net_sender);
             } else {
                 lm.removeUpdates(net_sender);
@@ -490,7 +531,7 @@ public class Receiver extends BroadcastReceiver {
         edit.putBoolean(org.sipdroid.sipua.ui.Settings.PREF_WIFI_DISABLED, !enable);
         edit.commit();
             /*
-    		if (enable) {
+            if (enable) {
                 Intent intent = new Intent(WifiManager.WIFI_STATE_CHANGED_ACTION);
                 intent.putExtra(WifiManager.EXTRA_NEW_STATE, wm.getWifiState());
                 mContext.sendBroadcast(intent);
@@ -860,7 +901,7 @@ public class Receiver extends BroadcastReceiver {
                     if (bestconfig != null &&
                             (activeconfig == null || bestconfig.priority != activeconfig.priority) &&
                             asu(bestscan) > asu(activescan) * 1.5 &&
-		                		/* (activeSSID == null || activescan != null) && */ asu(bestscan) > 22) {
+                                /* (activeSSID == null || activescan != null) && */ asu(bestscan) > 22) {
                         if (!Sipdroid.release) Log.i("SipUA:", "changing to " + bestconfig.SSID);
                         if (activeSSID == null || !activeSSID.equals(bestscan.SSID))
                             wm.disconnect();
@@ -877,6 +918,49 @@ public class Receiver extends BroadcastReceiver {
                         wm.saveConfiguration();
                     }
                 }
+            }
+        }
+    }
+
+
+
+
+    /**
+     * @param channelId          通知渠道的id
+     * @param channelName        用户可以看到的通知渠道的名字.
+     * @param channelDescription 用户可以看到的通知渠道的描述
+     * @param importance         重要级别
+     */
+    @TargetApi(Build.VERSION_CODES.O)
+    private void createNotificationChannel(String channelId, String channelName, String channelDescription, int importance) {
+        NotificationManager mNotificationMgr = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationChannel mChannel = new NotificationChannel(channelId, channelName, importance);
+        // 配置通知渠道的属性,用户可以看到的通知渠道的描述
+        mChannel.setDescription(channelDescription);
+
+        // 设置通知出现时的闪灯（如果 android 设备支持的话）
+        mChannel.enableLights(true);
+        mChannel.setLightColor(Color.RED);
+        // 设置通知出现时的震动（如果 android 设备支持的话）
+        mChannel.enableVibration(true);
+        mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+        //最后在notificationmanager中创建该通知渠道
+        mNotificationMgr.createNotificationChannel(mChannel);
+    }
+
+
+    private void checkNotificationChannel(String channelId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager mNotificationMgr = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            NotificationChannel channel = mNotificationMgr.getNotificationChannel(channelId);
+            if (channel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+                Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, mContext.getPackageName());
+                intent.putExtra(Settings.EXTRA_CHANNEL_ID, channel.getId());
+                mContext.startActivity(intent);
+                Toast.makeText(mContext,"请手动将通知打开", Toast.LENGTH_SHORT);
             }
         }
     }
