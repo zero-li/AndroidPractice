@@ -6,7 +6,6 @@
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app_pjsip/app_pjsip.iml" filepath="$PROJECT_DIR$/app_pjsip/app_pjsip.iml" />
       <module fileurl="file://$PROJECT_DIR$/lib_pjsip/lib_pjsip.iml" filepath="$PROJECT_DIR$/lib_pjsip/lib_pjsip.iml" />
-      <module fileurl="file://$PROJECT_DIR$/sipuae/sipuae.iml" filepath="$PROJECT_DIR$/sipuae/sipuae.iml" />
     </modules>
   </component>
 </project>

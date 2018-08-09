@@ -11,7 +11,6 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/app_pjsip" />
             <option value="$PROJECT_DIR$/lib_pjsip" />
-            <option value="$PROJECT_DIR$/sipuae" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
