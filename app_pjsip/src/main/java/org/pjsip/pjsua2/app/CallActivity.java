@@ -18,9 +18,6 @@
  */
 package org.pjsip.pjsua2.app;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -32,16 +29,11 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+import android.app.Activity;
+import android.content.Context;
+import android.content.res.Configuration;
 
-import org.pjsip.pjsua2.AccountConfig;
-import org.pjsip.pjsua2.CallInfo;
-import org.pjsip.pjsua2.CallOpParam;
-import org.pjsip.pjsua2.VideoPreviewOpParam;
-import org.pjsip.pjsua2.VideoWindowHandle;
-import org.pjsip.pjsua2.pjmedia_orient;
-import org.pjsip.pjsua2.pjsip_inv_state;
-import org.pjsip.pjsua2.pjsip_role_e;
-import org.pjsip.pjsua2.pjsip_status_code;
+import org.pjsip.pjsua2.*;
 
 class VideoPreviewHandler implements SurfaceHolder.Callback {
     public boolean videoPreviewActive = false;
@@ -96,8 +88,9 @@ public class CallActivity extends Activity
     public static Handler handler_;
     private static VideoPreviewHandler previewHandler =
             new VideoPreviewHandler();
-    private static CallInfo lastCallInfo;
+
     private final Handler handler = new Handler(this);
+    private static CallInfo lastCallInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -290,10 +283,10 @@ public class CallActivity extends Activity
 
             if (MainActivity.currentCall.vidWin != null) {
         /* Set capture orientation according to current
-         * device orientation.
+		 * device orientation.
 		 */
                 onConfigurationChanged(getResources().getConfiguration());
-        /* If there's incoming video, display it. */
+		/* If there's incoming video, display it. */
                 setupVideoSurface();
             }
 
@@ -322,7 +315,7 @@ public class CallActivity extends Activity
                 pjsip_inv_state.PJSIP_INV_STATE_CONFIRMED.swigValue()) {
             if (ci.getRole() == pjsip_role_e.PJSIP_ROLE_UAS) {
                 call_state = "Incoming call..";
-        /* Default button texts are already 'Accept' & 'Reject' */
+		/* Default button texts are already 'Accept' & 'Reject' */
             } else {
                 buttonHangup.setText("Cancel");
                 call_state = ci.getStateText();

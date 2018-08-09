@@ -18,8 +18,6 @@
  */
 package org.pjsip.pjsua2.app;
 
-import android.util.Log;
-
 import org.pjsip.pjsua2.Account;
 import org.pjsip.pjsua2.AccountConfig;
 import org.pjsip.pjsua2.AudioMedia;
@@ -305,7 +303,6 @@ class MyAccountConfig {
 
 
 class MyApp {
-
     static {
         try {
             System.loadLibrary("openh264");
@@ -322,18 +319,20 @@ class MyApp {
 
     public static Endpoint ep = new Endpoint();
     public static MyAppObserver observer;
-
-    private final String configName = "pjsua2.json";
-    private final int SIP_PORT = 6000;
-    private final int LOG_LEVEL = 4;
     public ArrayList<MyAccount> accList = new ArrayList<MyAccount>();
+
     private ArrayList<MyAccountConfig> accCfgs =
             new ArrayList<MyAccountConfig>();
     private EpConfig epConfig = new EpConfig();
     private TransportConfig sipTpConfig = new TransportConfig();
     private String appDir;
+
     /* Maintain reference to log writer to avoid premature cleanup by GC */
     private MyLogWriter logWriter;
+
+    private final String configName = "pjsua2.json";
+    private final int SIP_PORT = 6000;
+    private final int LOG_LEVEL = 4;
 
     public void init(MyAppObserver obs, String app_dir) {
         init(obs, app_dir, false);
@@ -478,7 +477,7 @@ class MyApp {
         JsonDocument json = new JsonDocument();
 
         try {
-        /* Load file */
+	    /* Load file */
             json.loadFile(filename);
             ContainerNode root = json.getRootContainer();
 
@@ -508,7 +507,7 @@ class MyApp {
     }
 
     private void buildAccConfigs() {
-    /* Sync accCfgs from accList */
+	/* Sync accCfgs from accList */
         accCfgs.clear();
         for (int i = 0; i < accList.size(); i++) {
             MyAccount acc = accList.get(i);
@@ -529,7 +528,7 @@ class MyApp {
         JsonDocument json = new JsonDocument();
 
         try {
-        /* Write endpoint config */
+	    /* Write endpoint config */
             json.writeObject(epConfig);
 
 	    /* Write transport config */
@@ -589,41 +588,45 @@ class MyApp {
     }
 
     /**
-     * 1. 不使用 speex, G722, GSM
-     * 2. iLBC 的优先级排在 pcmu和pcma 后面
+     * 调整编码优先级
+     * 优先级 最大值 254，优先级最高
+     * 最小值 0，表示不支持该编码，优先级最低
+     * 负数，溢出为 254，优先级最高
+     * 1. 不使用 speex, G722, GSM  SetPriority--------> 0
+     * 2. iLBC 的优先级排在 pcmu和pcma(128) 后面  SetPriority--------> 127
+     * 3. G729 的优先级排在 pcmu和pcma(128) 前面  SetPriority--------> 254
      */
     private void setCodecPriority() {
         try {
             CodecInfoVector codecInfoVector = ep.codecEnum();
             for (int i = 0; i < codecInfoVector.size(); i++) {
                 CodecInfo codecInfo = codecInfoVector.get(i);
-                Log.e("zhhli", "before: " + codecInfo.toString() + "\n");
+                //Log.e("zhhli", "before: " + codecInfo.toString() + "\n");
 
                 String codecId = codecInfo.getCodecId();
                 if (codecInfo.getCodecId().contains("speex")
                         || codecInfo.getCodecId().contains("G722")
                         || codecInfo.getCodecId().contains("GSM")) {
-                    short s = 0;
-                    ep.codecSetPriority(codecId, s);
+                    ep.codecSetPriority(codecId, (short) 0);
                 }
 
                 if (codecInfo.getCodecId().contains("iLBC")) {
-                    ep.codecSetPriority(codecId, (short) 1);
-
+                    ep.codecSetPriority(codecId, (short) 127);
+                }
+                if (codecInfo.getCodecId().contains("G729")) {
+                    ep.codecSetPriority(codecId, (short) -2);
                 }
 
                 CodecParam codecParam = ep.codecGetParam(codecId);
                 CodecParamInfo codecParamInfo = codecParam.getInfo();
-                Log.e("zhhli", "before: " + codecParamInfo.toString() + "\n");
-
+                //Log.e("zhhli", "before: " + codecParamInfo.toString() + "\n");
             }
 
 
             codecInfoVector = ep.codecEnum();
             for (int i = 0; i < codecInfoVector.size(); i++) {
-
                 CodecInfo codecInfo = codecInfoVector.get(i);
-                Log.e("zhhli", "after: " + codecInfo.toString() + "\n");
+                // Log.e("zhhli", "after: " + codecInfo.toString() + "\n");
             }
 
         } catch (Exception e) {

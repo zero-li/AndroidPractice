@@ -87,4 +87,8 @@ public class Buddy {
     if (getClass() == Buddy.class) pjsua2JNI.Buddy_onBuddyState(swigCPtr, this); else pjsua2JNI.Buddy_onBuddyStateSwigExplicitBuddy(swigCPtr, this);
   }
 
+  public void onBuddyEvSubState(OnBuddyEvSubStateParam prm) {
+    if (getClass() == Buddy.class) pjsua2JNI.Buddy_onBuddyEvSubState(swigCPtr, this, OnBuddyEvSubStateParam.getCPtr(prm), prm); else pjsua2JNI.Buddy_onBuddyEvSubStateSwigExplicitBuddy(swigCPtr, this, OnBuddyEvSubStateParam.getCPtr(prm), prm);
+  }
+
 }
