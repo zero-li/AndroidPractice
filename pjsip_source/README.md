@@ -14,11 +14,9 @@
 
  > bcg729 - 1.0.4
 
+## 2. 安装MSYS2
 
-
-## 2. 安装MYSM
-
-kkkkkkk
+[**官方安装指导**](https://www.msys2.org/)
 
 ## 3. 单独编译Pjsip
 
