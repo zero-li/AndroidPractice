@@ -2,30 +2,67 @@
 
 ## 1. 编译环境：
 
- > win7 MYSM
+ > ubuntu 14.0.4
 
  > Android相关
 
- * sdk 路径  D:\Android\sdk
+ * sdk 路径  
 
- * ndk 路径 D:\Android\sdk\ndk-bundle 版本号：source.properties--> Pkg.Revision = 15.1.4119039
+ * ndk 版本号：source.properties--> Pkg.Revision = 15.1.4119039
 
- > pjproject-2.7.2
+ > pjproject-2.9
 
  > bcg729 - 1.0.4
 
-## 2. 安装MSYS2
+## 2. 安装cmake
 
-[**官方安装指导**](https://www.msys2.org/)
+[**官方下载地址**](https://cmake.org/download/)
+
+当前最新版本为v3.15.0-rc3, [下载安装包](https://github.com/Kitware/CMake/releases/download/v3.15.0-rc3/cmake-3.15.0-rc3-Linux-x86_64.tar.gz)
+
+1. 解压
+```bash
+tar zxvf cmake-3.15.0-rc3-Linux-x86_64.tar.gz
+
+解压后的目录为：
+cmake-3.15.0-rc3-Linux-x86_64
+├── bin
+│   ├── ccmake
+│   ├── cmake
+│   ├── cmake-gui
+│   ├── cpack
+│   └── ctest
+├── doc
+│   └── cmake
+├── man
+│   ├── man1
+│   └── man7
+└── share
+    ├── aclocal
+    ├── applications
+    ├── cmake-3.9
+    ├── icons
+    └── mime
+```
+
+2. 创建软链接
+
+注: 文件路径是可以指定的, 一般选择在/opt 或 /usr 路径下, 这里选择/opt
+
+```bash
+mv cmake-3.15.0-rc3-Linux-x86_64 /opt/cmake-3.15.0
+ln -sf /opt/cmake-3.9.1/bin/*  /usr/bin/
+
+cmake --version
+```
 
 ## 3. 单独编译Pjsip
 
 [**官方编译指导**](https://trac.pjsip.org/repos/wiki/Getting-Started/Android)点击打开
 
-增加头文件 pjproject-2.7.2\pjlib\include\pj\config_site.h
+增加头文件 pjproject-2.9\pjlib\include\pj\config_site.h
 
-
-```
+```bash
 // 内容
 /* Activate Android specific settings in the 'config_site_sample.h' */
 #define PJ_CONFIG_ANDROID 1
@@ -36,7 +73,7 @@
 // 导入Andorid ndk 路径
 export ANDROID_NDK_ROOT=/d/Android/sdk/ndk-bundle
 
-cd pjproject-2.7.2
+cd pjproject-2.9
 
 // 编译 pjsip
 ./configure-android
@@ -48,9 +85,7 @@ make
 
 ```
 
-
-
-## 4. 增加 G729 编码支持
+## 4. 编译 bcg729
 
 [**官方编译指导**](https://trac.pjsip.org/repos/ticket/2029)点击打开
 
@@ -64,45 +99,36 @@ make
 
 * AndroidPractice/pjsip_source/bcg729/android/build_bcg729.sh
 
-```bash
-$ pwd
-/d/Android/work2018/my/AndroidPractice/pjsip_source/bcg729/android
-$ ls
-build_bcg729.sh
-```
-
-> build_bcg729.sh 文件内容
+> build_bcg729.sh 关键内容
 
 ```bash
 # 1. 导入 Android 环境变量
 # * 此处需要根据您的 sdk ndk 路径进行修改
-export PATH=/d/Android/sdk/cmake/3.6.4111459/bin/:$PATH
-export ANDROID_NDK_ROOT=/d/Android/sdk/ndk-bundle
+export ANDROID_NDK_ROOT=/home/zhhli/android/android-ndk-r17c
 
-# 2. cmake 命令，
+# 2. cmake 命令（需要安装cmake），
 # 注意：
 # * CMAKE_TOOLCHAIN_FILE ，此处需要根据您的 ndk 路径进行修改
-# * CMAKE_MAKE_PROGRAM ，此处需要根据您的 sdk 路径进行修改
 # * CMAKE_GENERATOR="Ninja" , 使用 Ninja，特别此处存在双引号
 # * CMAKE_SYSTEM_NAME=Android, 使用 Android
-# * CMAKE_SYSTEM_VERSION ，Android 版本
+# * DANDROID_ABI ，Android 版本
 # * CMAKE_ANDROID_ARCH_ABI ，生成的 静态库 类型
 # * 从此处开始到 cmake end ，不能存在注释分割命令行
 cmake  ../ \
-  -DCMAKE_TOOLCHAIN_FILE=/d/Android/sdk/ndk-bundle/build/cmake/android.toolchain.cmake  \
-  -DCMAKE_MAKE_PROGRAM=/d/Android/sdk/cmake/3.6.4111459/bin/ninja.exe \
+  -DCMAKE_INSTALL_PREFIX=${BUILD_PATH} \
+  -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake  \
+  -DANDROID_ABI=${arch} \
   -DANDROID_TOOLCHAIN=clang \
   -DCMAKE_GENERATOR="Ninja"  \
   -DCMAKE_SYSTEM_NAME=Android \
-  -DCMAKE_SYSTEM_VERSION=17 \
-  -DCMAKE_ANDROID_ARCH_ABI=armeabi \
-  -DCMAKE_ANDROID_NDK=/d/Android/sdk/ndk-bundle \
+  -DCMAKE_SYSTEM_VERSION=14 \
+  -DCMAKE_ANDROID_NDK=${ANDROID_NDK_ROOT} \
   -DCMAKE_ANDROID_STL_TYPE=gnustl_static \
   -DENABLE_STATIC=ON \
   -DENABLE_SHARED=ON \
   -DCMAKE_BUILD_TYPE=Release \
   -DENABLE_TESTS=OFF \
-  -DCMAKE_SKIP_INSTALL_RPATH=ON \
+  -DCMAKE_SKIP_INSTALL_RPATH=ON
 
   # cmake end
 
@@ -115,123 +141,92 @@ ninja
 
 ```bash
 $ ./build_bcg729.sh
--- Android: Targeting API '14' with architecture 'arm', ABI 'armeabi-v7a', and processor 'armv7-a'
--- Android: Selected Clang toolchain 'arm-linux-androideabi-clang' with GCC toolchain 'arm-linux-androideabi-4.9'
--- Check for working C compiler: D:/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe
--- Check for working C compiler: D:/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe -- works
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Detecting C compile features
--- Detecting C compile features - done
--- Package file name is bcg729-1.0.4
--- Configuring done
--- Generating done
--- Build files have been written to: .../../.../AndroidPractice/pjsip_source/bcg729/android
-.......
-[51/54] Building C object src/CMakeFiles/bcg729.dir/cng.c.o
-[52/54] Building C object src/CMakeFiles/bcg729.dir/dtx.c.o
-[53/54] Building C object src/CMakeFiles/bcg729.dir/vad.c.o
-[54/54] Linking C shared library src\libbcg729.so
+```
+
+编译日志
+
+```bash
+--target=armv7-none-linux-androideabi
+--target=aarch64-none-linux-android
+--target=i686-none-linux-android
+--target=x86_64-none-linux-android
+
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/x86-4.9/prebuilt/linux-x86_64
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/x86_64-4.9/prebuilt/linux-x86_64
 ```
 
 ### 4.1.3 最终生成的静态库路径
 
+```bash
+bcg729\build_out
 ```
-D:\Android\work2018\my\AndroidPractice\pjsip_source\bcg729\android\src\libbcg729.so
-```
 
-## 4.2 根据pjsip 编译文件，修改bcg729相关路径
+## 5 编译 openssl
 
-### 4.2.1 分析 pjsip 编译文件
+OpenSSL 版本为 1.1.1c，注意使用其他1.0.2版本（如1.0.2s）不支持 pjsip-2.9
 
-* AndroidPractice\pjsip_source\pjproject-2.7.2\aconfigure
+ndk 版本为 r20编译通过
+
+使用脚本build_openssl_1.1.1c.sh 进行编译
+
+> 修改以下内容
 
 ```bash
-
-  if test "x$with_bcg729" != "xno" -a "x$with_bcg729" != "x"; then
-		        BCG729_PREFIX=$with_bcg729
-		  	BCG729_CFLAGS="-I$BCG729_PREFIX/include"
-			BCG729_LDFLAGS="-L$BCG729_PREFIX/lib"
+ANDROID_NDK=/home/zhhli/android/sdk/ndk-bundle
 ```
 
-可知 pjsip 编译过程中，会查找对应的 “BCG729_PREFIX/include”、“BCG729_PREFIX/lib”
-
-因此，在修改 bcg729文件目录
+输出目录为
 
 ```bash
-bcg729
-    |-- include
-        |-- bcg729
-            |-- decoder.h
-            |-- encoder.h
-    |-- lib
-        |-- libbcg729.so
+build-openssl-1.1.1c
 ```
 
-### 4.2.2 编译pjsip
+## 6 编译pjsip, 支持 bcg729、OpenSSL
 
-#### 4.2.2.1 执行以下命令，查看控制台输出
+使用脚本 build_pjsip_linux.sh 进行编译
+
+> 修改以下内容
+
 ```bash
-cd pjproject-2.7.2
+# 头文件以及lib文件路径
+BCG729_PATH=/home/zhhli/work/pjsip-build/bcg729/build-out/build
+OPENSSL_PATH=/home/zhhli/work/pjsip-build/build-openssl-1.1.1c
 
-export ANDROID_NDK_ROOT=/d/Android/sdk/ndk-bundle
-
-./configure-android --with-bcg729=/d/Android/work2018/my/AndroidPractice/pjsip_source/bcg729
-
+# pjsip 不支持 ndk 16 以上版本
+export ANDROID_NDK_ROOT=/home/zhhli/android/android-ndk-r14b
 ```
 
-错误结果：
+输出目录为
 
-```bash 
-Using bcg729 prefix... ./bcg729
-checking bcg729 usability... no
-Checking if libyuv is disabled...no
-
-
-这是由于 上一步 bcg729文件目录 ，未正确配置, 需要修改 bcg729文件目录
+```bash
+out-pjsip/jniLibs
 ```
 
-正确结果：
+编译日志
 
-```
-Using bcg729 prefix... ./bcg729
+```bash
+Using SSL prefix... /home/zhhli/work/test/build-openssl-1.1.1c/armeabi-v7a
+checking for OpenSSL installations..
+checking openssl/ssl.h usability... yes
+checking openssl/ssl.h presence... yes
+checking for openssl/ssl.h... yes
+checking for ERR_load_BIO_strings in -lcrypto... yes
+checking for SSL_CTX_new in -lssl... yes
+OpenSSL library found, SSL support enabled
+checking for EVP_aes_128_gcm in -lcrypto... yes
+OpenSSL has AES GCM support, SRTP will use OpenSSL
+Checking if OpenCORE AMR support is disabled... yes
+Checking if SILK support is disabled... yes
+checking for OPUS installations..
+checking opus/opus.h usability... no
+checking opus/opus.h presence... no
+checking for opus/opus.h... no
+checking for opus_repacketizer_get_size in -lopus... no
+OPUS library not found, OPUS support disabled
+Using bcg729 prefix... /home/zhhli/work/pjsip-build/bcg729
 checking bcg729 usability... ok
-```
 
-
-
-#### 4.2.2.2 第二步
-
-```
-make dep && make clean && make
-
-// 编译 Android 静态库
-cd pjsip-apps/src/swig/
-
-make clean && make
-
-```
-
-错误：
-
-```
-d:/android/sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9.x/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot find -lbcg729
-collect2.exe: error: ld returned 1 exit status
-make[2]: *** [/d/Android/work2018/my/AndroidPractice/pjsip_source/pjproject-2.7.2/build/rules.mak:125：../bin/pjlib-test-arm-unknown-linux-androideabi] 错误 1
-make[2]: 离开目录“/d/Android/work2018/my/AndroidPractice/pjsip_source/pjproject-2.7.2/pjlib/build”
-make[1]: *** [Makefile:112：pjlib-test-arm-unknown-linux-androideabi] 错误 2
-make[1]: 离开目录“/d/Android/work2018/my/AndroidPractice/pjsip_source/pjproject-2.7.2/pjlib/build”
-make: *** [Makefile:14：all] 错误 1
-
-
-原因 无法找到 libbcg729.so
-修正 ./configure-android --with-bcg729=[完整全路径]
-```
-
-大功告成,获取 pjsip 静态库、 bcg729 静态库
-```
-AndroidPractice\pjsip_source\pjproject-2.7.2\pjsip-apps\src\swig\java\android\app\src\main\jniLibs\armeabi\libpjua2.so
-
-AndroidPractice\pjsip_source\bcg729\lib\libbcg729.so
 ```
 

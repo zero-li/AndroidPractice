@@ -374,18 +374,11 @@ class MyApp {
                 ~(pj_log_decoration.PJ_LOG_HAS_CR.swigValue() |
                         pj_log_decoration.PJ_LOG_HAS_NEWLINE.swigValue()));
 
-	/* Write log to file (just uncomment whenever needed) */
-        //String log_path = android.os.Environment.getExternalStorageDirectory().toString();
-        //log_cfg.setFilename(log_path + "/pjsip.log");
 
 	/* Set ua config. */
         UaConfig ua_cfg = epConfig.getUaConfig();
         ua_cfg.setUserAgent("Pjsua2 Android " + ep.libVersion().getFull());
 
-	/* STUN server. */
-        //StringVector stun_servers = new StringVector();
-        //stun_servers.add("stun.pjsip.org");
-        //ua_cfg.setStunServer(stun_servers);
 
 	/* No worker thread */
         if (own_worker_thread) {
@@ -400,53 +393,16 @@ class MyApp {
             return;
         }
 
-	/* Create transports. */
+        /* Create transports. */
         try {
-            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_UDP,
-                    sipTpConfig);
+            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_UDP, new TransportConfig());
+            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TCP, new TransportConfig());
+            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TLS, new TransportConfig());
         } catch (Exception e) {
             System.out.println(e);
         }
 
-//        try {
-//            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TCP,
-//                    sipTpConfig);
-//        } catch (Exception e) {
-//            System.out.println(e);
-//        }
-//
-//        try {
-//            sipTpConfig.setPort(SIP_PORT + 1);
-//            ep.transportCreate(pjsip_transport_type_e.PJSIP_TRANSPORT_TLS,
-//                    sipTpConfig);
-//        } catch (Exception e) {
-//            System.out.println(e);
-//        }
 
-        /* Set SIP port back to default for JSON saved config */
-        sipTpConfig.setPort(SIP_PORT);
-
-	/* Create accounts. */
-        for (int i = 0; i < accCfgs.size(); i++) {
-            MyAccountConfig my_cfg = accCfgs.get(i);
-
-	    /* Customize account config */
-            my_cfg.accCfg.getNatConfig().setIceEnabled(false);
-            my_cfg.accCfg.getVideoConfig().setAutoTransmitOutgoing(true);
-            my_cfg.accCfg.getVideoConfig().setAutoShowIncoming(true);
-
-            MyAccount acc = addAcc(my_cfg.accCfg);
-            if (acc == null)
-                continue;
-
-	    /* Add Buddies */
-            for (int j = 0; j < my_cfg.buddyCfgs.size(); j++) {
-                BuddyConfig bud_cfg = my_cfg.buddyCfgs.get(j);
-                acc.addBuddy(bud_cfg);
-            }
-        }
-
-	/* Start. */
         try {
             ep.libStart();
         } catch (Exception e) {

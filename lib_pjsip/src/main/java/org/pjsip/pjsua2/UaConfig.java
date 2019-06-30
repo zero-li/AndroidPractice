@@ -68,6 +68,15 @@ public class UaConfig extends PersistentObject {
     return (cPtr == 0) ? null : new StringVector(cPtr, false);
   }
 
+  public void setOutboundProxies(StringVector value) {
+    pjsua2JNI.UaConfig_outboundProxies_set(swigCPtr, this, StringVector.getCPtr(value), value);
+  }
+
+  public StringVector getOutboundProxies() {
+    long cPtr = pjsua2JNI.UaConfig_outboundProxies_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new StringVector(cPtr, false);
+  }
+
   public void setUserAgent(String value) {
     pjsua2JNI.UaConfig_userAgent_set(swigCPtr, this, value);
   }
@@ -121,11 +130,11 @@ public class UaConfig extends PersistentObject {
     this(pjsua2JNI.new_UaConfig(), true);
   }
 
-  public void readObject(ContainerNode node) throws java.lang.Exception {
+    public void readObject(ContainerNode node) throws java.lang.Exception {
     pjsua2JNI.UaConfig_readObject(swigCPtr, this, ContainerNode.getCPtr(node), node);
   }
 
-  public void writeObject(ContainerNode node) throws java.lang.Exception {
+    public void writeObject(ContainerNode node) throws java.lang.Exception {
     pjsua2JNI.UaConfig_writeObject(swigCPtr, this, ContainerNode.getCPtr(node), node);
   }
 
