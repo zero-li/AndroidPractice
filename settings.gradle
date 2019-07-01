@@ -1,2 +1,8 @@
-include ':app', ':lib_pjsip', ':app_pjsip'
-//, ':sipuae'
+include ':app'
+
+
+def includeSip(){
+    include 'lib_pjsip', 'app_pjsip'//,"sipuae"
+    project(':lib_pjsip').projectDir = file('sip/lib_pjsip')
+    project(':app_pjsip').projectDir = file('sip/app_pjsip')
+}
