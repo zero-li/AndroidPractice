@@ -1,0 +1,34 @@
+
+Using SSL prefix... /home/zhhli/work/test/build-openssl-1.1.1c/armeabi-v7a
+checking for OpenSSL installations..
+checking openssl/ssl.h usability... yes
+checking openssl/ssl.h presence... yes
+checking for openssl/ssl.h... yes
+checking for ERR_load_BIO_strings in -lcrypto... yes
+checking for SSL_CTX_new in -lssl... yes
+OpenSSL library found, SSL support enabled
+checking for EVP_aes_128_gcm in -lcrypto... yes
+OpenSSL has AES GCM support, SRTP will use OpenSSL
+Checking if OpenCORE AMR support is disabled... yes
+Checking if SILK support is disabled... yes
+checking for OPUS installations..
+checking opus/opus.h usability... no
+checking opus/opus.h presence... no
+checking for opus/opus.h... no
+checking for opus_repacketizer_get_size in -lopus... no
+OPUS library not found, OPUS support disabled
+Using bcg729 prefix... /home/zhhli/work/pjsip-build/bcg729
+checking bcg729 usability... ok
+
+
+build bcg729 log ====================================
+--target=armv7-none-linux-androideabi
+--target=aarch64-none-linux-android
+--target=i686-none-linux-android
+--target=x86_64-none-linux-android
+
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/x86-4.9/prebuilt/linux-x86_64
+--gcc-toolchain=/home/zhhli/android/android-ndk-r17c/toolchains/x86_64-4.9/prebuilt/linux-x86_64
+
